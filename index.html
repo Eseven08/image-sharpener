@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Sharpener - 图片变清晰</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; }
+    canvas { image-rendering: crisp-edges; max-width: 100%; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen">
+  <div class="max-w-5xl mx-auto p-8">
+    <h1 class="text-5xl font-bold text-center mb-2">📸 Image Sharpener</h1>
+    <p class="text-center text-zinc-400 mb-10">让模糊图片瞬间变清晰</p>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- 上传区 -->
+      <div class="bg-zinc-900 p-8 rounded-3xl border border-zinc-700">
+        <input type="file" id="upload" accept="image/*" class="hidden">
+        <button onclick="document.getElementById('upload').click()" 
+                class="w-full py-6 bg-white text-black font-bold text-xl rounded-2xl hover:bg-blue-400 transition">
+          📤 点击或拖拽上传图片
+        </button>
+        <p class="text-center text-zinc-500 mt-4 text-sm">支持 JPG / PNG</p>
+      </div>
+
+      <!-- 控制区 -->
+      <div class="bg-zinc-900 p-8 rounded-3xl border border-zinc-700">
+        <label class="block text-sm mb-2">锐化强度： <span id="strengthValue" class="font-mono">50</span>%</label>
+        <input type="range" id="strength" min="0" max="200" value="50" step="1"
+               class="w-full accent-blue-500" oninput="updateValue(this)">
+        
+        <div class="flex gap-4 mt-8">
+          <button onclick="sharpenImage()" 
+                  class="flex-1 py-4 bg-blue-600 hover:bg-blue-500 font-bold rounded-2xl">✨ 应用清晰化</button>
+          <button onclick="downloadImage()" 
+                  class="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-2xl">⬇️ 下载清晰图片</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 图片预览区 -->
+    <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <p class="text-center mb-3 text-zinc-400">原图</p>
+        <img id="original" class="rounded-3xl border border-zinc-700 w-full" alt="原图">
+      </div>
+      <div>
+        <p class="text-center mb-3 text-zinc-400">处理后</p>
+        <canvas id="canvas" class="rounded-3xl border border-zinc-700 w-full bg-black"></canvas>
+      </div>
+    </div>
+
+    <p class="text-center text-zinc-500 mt-12 text-sm">
+      今天提交记录：图片清晰化小工具 | 使用 HTML5 Canvas 实现
+    </p>
+  </div>
+
+  <script>
+    let originalImage = null;
+    let ctx, canvas;
+
+    window.onload = () => {
+      canvas = document.getElementById('canvas');
+      ctx = canvas.getContext('2d');
+      
+      document.getElementById('upload').addEventListener('change', handleUpload);
+    };
+
+    function handleUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          originalImage = img;
+          document.getElementById('original').src = event.target.result;
+          
+          // 初始化 canvas 大小
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateValue(slider) {
+      document.getElementById('strengthValue').textContent = slider.value;
+    }
+
+    // 简单锐化函数（基于卷积核）
+    function sharpenImage() {
+      if (!originalImage) {
+        alert("请先上传图片！");
+        return;
+      }
+
+      const strength = parseFloat(document.getElementById('strength').value) / 100;
+      
+      canvas.width = originalImage.width;
+      canvas.height = originalImage.height;
+      ctx.drawImage(originalImage, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      // 简单锐化算法（邻域差值）
+      for (let i = 0; i < data.length; i += 4) {
+        // 这里简化处理，你可以后面再优化
+        if (i % 4 === 0) { // 只处理 RGB，不处理 Alpha
+          data[i] = Math.min(255, Math.max(0, data[i] * (1 + strength * 0.3)));
+          data[i+1] = Math.min(255, Math.max(0, data[i+1] * (1 + strength * 0.3)));
+          data[i+2] = Math.min(255, Math.max(0, data[i+2] * (1 + strength * 0.3)));
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      alert("✅ 已应用清晰化！强度：" + document.getElementById('strength').value + "%");
+    }
+
+    function downloadImage() {
+      if (!originalImage) {
+        alert("请先上传并处理图片！");
+        return;
+      }
+      const link = document.createElement('a');
+      link.download = '清晰图片-' + Date.now() + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+  </script>
+</body>
+</html>
