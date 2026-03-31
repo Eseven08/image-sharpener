@@ -18,3 +18,4 @@
 **Made with ❤️ by Eseven - 2026**# image-sharpener
 // TODO: 后面可以换成更强的卷积锐化算法
 可以用pc更好
+可以支持4k
