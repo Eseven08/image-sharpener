@@ -15,5 +15,5 @@
 3. 拖动滑块调节清晰度
 4. 下载处理后的图片
 
-**Made with ❤️ by 你 - 2026**# image-sharpener
+**Made with ❤️ by Eseven - 2026**# image-sharpener
 // TODO: 后面可以换成更强的卷积锐化算法
